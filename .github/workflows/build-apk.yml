@@ -21,34 +21,44 @@ jobs:
 
     - name: Setup Android SDK
       uses: android-actions/setup-android@v2
+      with:
+        api-level: 33
+        build-tools-version: 33.0.2
+        ndk-version: 25.1.8937393
+        cmake-version: 3.22.1
 
-    - name: Grant execute permission for gradlew
-      run: |
-        # 先检查文件是否存在
-        if [ -f "gradlew" ]; then
-          chmod +x gradlew
-          echo "gradlew 权限设置成功"
-        elif [ -f "./gradlew" ]; then
-          chmod +x ./gradlew
-          echo "./gradlew 权限设置成功"
-        else
-          echo "使用 gradle 命令（不使用 wrapper）"
-        fi
+    - name: Make gradlew executable
+      run: chmod +x ./gradlew
 
-    - name: Build with Gradle
+    - name: Cache Gradle packages
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.gradle/caches
+          ~/.gradle/wrapper
+        key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+        restore-keys: |
+          ${{ runner.os }}-gradle-
+
+    - name: Build APK
       run: |
-        # 尝试使用 gradlew，如果不存在则使用系统 gradle
-        if [ -f "gradlew" ]; then
-          ./gradlew assembleDebug
-        else
-          gradle assembleDebug
-        fi
+        # 清理之前的构建
+        ./gradlew clean
+        
+        # 使用 --warning-mode none 避免警告导致失败
+        ./gradlew assembleDebug --no-daemon --warning-mode none
+        
+        # 或者尝试离线模式
+        # ./gradlew assembleDebug --offline --no-daemon
       env:
-        JAVA_OPTS: '-Xmx2048m'
+        JAVA_OPTS: '-Xmx4096m'  # 增加内存
+        GRADLE_OPTS: '-Dorg.gradle.daemon=false'
 
     - name: Upload APK
+      if: success()
       uses: actions/upload-artifact@v4
       with:
-        name: app-debug-apk
-        path: app/build/outputs/apk/debug/*.apk
-        retention-days: 5
+        name: android-apk
+        path: |
+          app/build/outputs/apk/debug/*.apk
+          app/build/outputs/apk/debug/output-metadata.json
