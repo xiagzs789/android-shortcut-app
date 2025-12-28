@@ -12,13 +12,13 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    - name: Install Gradle
+    - name: Install Gradle 8.0
       run: |
-        # 安装指定版本的 Gradle
-        wget https://services.gradle.org/distributions/gradle-7.5-bin.zip
-        sudo unzip -d /opt/gradle gradle-7.5-bin.zip
-        echo "GRADLE_HOME=/opt/gradle/gradle-7.5" >> $GITHUB_ENV
-        echo "/opt/gradle/gradle-7.5/bin" >> $GITHUB_PATH
+        # 安装 Gradle 8.0
+        wget https://services.gradle.org/distributions/gradle-8.0-all.zip
+        sudo unzip -d /opt/gradle gradle-8.0-all.zip
+        echo "GRADLE_HOME=/opt/gradle/gradle-8.0" >> $GITHUB_ENV
+        echo "/opt/gradle/gradle-8.0/bin" >> $GITHUB_PATH
         gradle --version
 
     - name: Set up JDK 17
@@ -37,11 +37,11 @@ jobs:
 
     - name: Build APK
       run: |
-        # 使用系统安装的 Gradle
+        # 使用 Gradle 8.0
         gradle clean
         gradle assembleDebug
       env:
-        JAVA_OPTS: '-Xmx2048m'
+        JAVA_OPTS: '-Xmx4096m'
         GRADLE_OPTS: '-Dorg.gradle.daemon=false'
 
     - name: Upload APK
